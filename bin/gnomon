@@ -1,2 +1,6 @@
-#!/usr/bin/env node
-require('../cli.js');
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT="$SCRIPT_DIR/.."
+
+$ROOT/node_modules/.bin/bunx $ROOT/src/cli.ts

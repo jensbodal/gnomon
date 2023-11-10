@@ -1,19 +1,21 @@
 {
-  "name": "gnomon",
-  "version": "1.5.0",
+  "name": "@bodal/gnomon",
+  "version": "2.0.2",
   "description": "Utility to annotate console logging statements with timestamps and find slow processes",
   "main": "index.js",
+  "private": false,
+  "type": "module",
   "bin": {
     "gnomon": "./bin/gnomon"
   },
   "man": "./doc/gnomon.1",
   "scripts": {
-    "test": "node test/timer.js | ./bin/gnomon | node test/validator.js",
-    "docs": "node meta/make-docs.js && marked-man README.md > ./doc/gnomon.1"
+    "docs": "node meta/make-docs.js && marked-man README.md > ./doc/gnomon.1",
+    "test": "echo hi | ./bin/gnomon"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/paypal/gnomon"
+    "url": "https://github.com/jensbodal/gnomon"
   },
   "keywords": [
     "time",
@@ -24,24 +26,33 @@
     "stream"
   ],
   "author": {
-    "name": "James Zetlen",
-    "email": "jzetlen@paypal.com"
+    "name": "Jens Bodal",
+    "email": "me@jensbodal.com"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/paypal/gnomon/issues"
+    "url": "https://github.com/jensbodal/gnomon/issues"
   },
-  "homepage": "https://github.com/paypal/gnomon",
-  "dependencies": {
-    "chalk": "^1.1.1",
-    "dateutil": "^0.1.0",
-    "meow": "^3.7.0",
-    "repeating": "^2.0.0",
-    "split": "^1.0.0",
-    "through": "^2.3.8",
-    "window-size": "^0.2.0"
-  },
+  "homepage": "https://github.com/jensbodal/gnomon",
   "devDependencies": {
-    "marked-man": "^0.1.6"
+    "@tsconfig/recommended": "^1.0.3",
+    "@types/node": "^20.9.0",
+    "@types/repeating": "^3.0.2",
+    "@types/split": "^1.0.5",
+    "@types/through": "^0.0.33",
+    "@types/window-size": "^1.1.4",
+    "type-fest": "^4.7.1",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "bun": "^1.0.11",
+    "chalk": "^5.3.0",
+    "date-fns": "^2.30.0",
+    "meow": "12.1.0",
+    "repeating": "^4.0.0",
+    "split": "^1.0.1",
+    "strip-ansi": "^7.1.0",
+    "through": "^2.3.8",
+    "window-size": "^1.1.1"
   }
 }

@@ -1,0 +1,10 @@
+{
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "module": "NodeNext",
+    "noEmit": true,
+    "noImplicitThis": false
+  },
+  "include": ["src/**/*.ts"]
+}
