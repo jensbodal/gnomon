@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@bodal/pargv':
+    specifier: ^0.0.1
+    version: 0.0.1
   bun:
     specifier: ^1.0.11
     version: 1.0.11
@@ -14,9 +17,6 @@ dependencies:
   date-fns:
     specifier: ^2.30.0
     version: 2.30.0
-  meow:
-    specifier: 12.1.0
-    version: 12.1.0
   repeating:
     specifier: ^4.0.0
     version: 4.0.0
@@ -66,6 +66,12 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.14.0
+    dev: false
+
+  /@bodal/pargv@0.0.1:
+    resolution: {integrity: sha512-LvQXjsaP9TLLHza1KqSNLBpydVVZmuztDOq9h/APX2r9JcI4ti5T+Km3KqWl3bAwQR5k1osrwqHEphfq9oQ6HQ==}
+    dependencies:
+      minimist: 1.2.8
     dev: false
 
   /@oven/bun-darwin-aarch64@1.0.11:
@@ -239,9 +245,8 @@ packages:
       is-buffer: 1.1.6
     dev: false
 
-  /meow@12.1.0:
-    resolution: {integrity: sha512-SvSqzS5ktjGoySdCwxQI16iO/ID1LtxM03QvJ4FF2H5cCtXLN7YbfKBCL9btqXSSuJ5TNG4UH6wvWtXZuvgvrw==}
-    engines: {node: '>=16.10'}
+  /minimist@1.2.8:
+    resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
     dev: false
 
   /regenerator-runtime@0.14.0:

@@ -7,11 +7,21 @@ import { width as termwidth } from "window-size";
 import { EOL as newline } from "node:os";
 
 type Line = [number, number];
-type Options = {
+type Timeout = NodeJS.Timeout;
+
+export type GnomonOptions = {
   /**
    * @default "H:i:s.u O
    */
   format?: string;
+  /**
+   * @default undefined
+   */
+  low?: number;
+  /**
+   * @default undefined
+   */
+  medium?: number;
   /**
    * @default undefined
    */
@@ -20,10 +30,6 @@ type Options = {
    * ???
    */
   ignoreBlank?: boolean;
-  /**
-   * @default undefined
-   */
-  medium?: number;
   /**
    * ???
    */
@@ -43,7 +49,8 @@ const ansi = {
 const nanoPow = Math.pow(10, 9);
 
 function durationToSeconds(dur: Line) {
-  return dur[0] + dur[1] / nanoPow;
+  const [seconds, nanoseconds] = dur;
+  return seconds + nanoseconds / nanoPow;
 }
 
 const space = " ";
@@ -58,6 +65,7 @@ function formatDuration(dur: Line) {
 const start = process.hrtime();
 let elapsedLine: Line = [0, 0];
 let elapsedTotal: Line = [0, 0];
+let elapsedSeconds = durationToSeconds(elapsedLine);
 let lap = start;
 let last = start;
 
@@ -69,6 +77,7 @@ function tick(resetLine: Line | boolean) {
   } else {
     elapsedLine = process.hrtime(lap);
   }
+  elapsedSeconds = durationToSeconds(elapsedLine);
   elapsedTotal = process.hrtime(start);
   last = process.hrtime();
 }
@@ -82,10 +91,18 @@ function padFor(s = "", max: number) {
 const bar = space + chalk.reset.inverse(" ") + space;
 const totalLabel = "Total";
 
-function gnomon(opts: Options) {
-  opts = opts || {};
-  const fmt = opts.format || "H:i:s.u O";
-  const type = opts.type || "elapsed-line";
+function gnomon(opts?: GnomonOptions) {
+  const {
+    high,
+    medium,
+    low = -1,
+    format: fmt = "H:i:s.u O",
+    type = "elapsed-line",
+    realTime = 500,
+    ignoreBlank,
+  } = opts ?? {};
+  // const fmt = opts.format || "H:i:s.u O";
+  // const type = opts.type || "elapsed-line";
 
   const stampers = {
     "elapsed-line": function () {
@@ -112,8 +129,9 @@ function gnomon(opts: Options) {
   blank = repeating(maxDurLength, space) + bar;
   maxLineLength = termwidth - stripColor(blank).length;
 
-  function stampLine(stamp: string, line: string): string {
+  const stampLine = (stamp: string, line: string): string => {
     const len = line ? stripColor(line).length : 0;
+
     if (len > maxLineLength) {
       return (
         stamp +
@@ -122,62 +140,49 @@ function gnomon(opts: Options) {
         stampLine(blank, line.slice(maxLineLength))
       );
     }
-    return stamp + line + newline;
-  }
 
-  let colorStamp: any;
-  const high = opts.high;
-  const medium = opts.medium;
-  if (medium && high) {
-    colorStamp = function (stamp: any) {
-      const seconds = durationToSeconds(elapsedLine);
-      if (seconds >= high) {
-        return chalk.reset.red(stamp);
-      }
-      if (seconds >= medium) {
-        return chalk.reset.yellow(stamp);
-      }
-      return chalk.reset.green(stamp);
-    };
-  } else if (medium) {
-    colorStamp = function (stamp: any) {
-      if (durationToSeconds(elapsedLine) >= medium) {
-        return chalk.reset.yellow(stamp);
-      }
-      return chalk.reset.green(stamp);
-    };
-  } else if (high) {
-    colorStamp = function (stamp: any) {
-      if (durationToSeconds(elapsedLine) >= high) {
-        return chalk.reset.red(stamp);
-      }
-      return chalk.reset.green(stamp);
-    };
-  } else {
-    colorStamp = function (stamp: any) {
-      return chalk.reset(stamp);
-    };
-  }
+    return stamp + line + newline;
+  };
+
+  /**
+   * Provides color formatted stamp based on elapsed time and thresholds set in options
+   * @param stamp
+   * @param value no idea, probably not needed, is always 0
+   * @returns
+   */
+  const colorStamp = (stamp: any) => {
+    if (high && elapsedSeconds >= high) {
+      return chalk.reset.red(stamp);
+    }
+    if (medium && elapsedSeconds >= medium) {
+      return chalk.reset.yellow(stamp);
+    }
+    return chalk.reset.green(stamp);
+  };
 
   const createStamp = stampers[type];
 
-  function createFormattedStamp(text = "", value = 0) {
+  /**
+   * ??? creates our format for output with time aligned, bar, and the output
+   * @returns
+   */
+  function createFormattedStamp() {
     const stamp = createStamp();
-    return padFor(text, maxDurLength) + colorStamp(stamp, value) + bar;
+    return padFor("", maxDurLength) + colorStamp(stamp) + bar;
   }
-
-  type Timeout = NodeJS.Timeout;
 
   let lastLine: any;
   let overwrite: any;
   let autoUpdate: Timeout;
+
   function scheduleAutoUpdate(stream: any) {
     autoUpdate = setTimeout(function () {
       tick(false);
       stream.queue(overwrite + stampLine(createFormattedStamp(), lastLine));
       scheduleAutoUpdate(stream);
-    }, opts.realTime);
+    }, realTime);
   }
+
   function setLastLine(line: Line) {
     lastLine = line;
     overwrite =
@@ -189,26 +194,40 @@ function gnomon(opts: Options) {
   }
 
   let feed: any;
-  if (opts.realTime) {
+
+  if (realTime) {
+    // TODO remove last here since it's not used?
+    // not sure why we have feed defined twice
     feed = function (stream: any, line: any, last: any) {
       feed = function (stream: any, line: any, last: any) {
         tick(false);
         stream.queue(overwrite + stampLine(createFormattedStamp(), lastLine));
         tick(true);
-        if (autoUpdate) clearTimeout(autoUpdate);
+
+        if (autoUpdate) {
+          clearTimeout(autoUpdate);
+        }
+
         scheduleAutoUpdate(stream);
         setLastLine(line);
-        if (!last) stream.queue(stampLine(blank, line));
+
+        if (!last && elapsedSeconds > low) {
+          stream.queue(stampLine(blank, line));
+        }
       };
       stream.queue(stampLine(blank, line));
       setLastLine(line);
       scheduleAutoUpdate(stream);
     };
   } else {
-    feed = function (stream: any, line: Line, last: any) {
-      feed = function (stream: any, line: Line, last: any) {
+    feed = function (stream: any, line: Line) {
+      feed = function (stream: any, line: Line, last?: boolean) {
         tick(true);
-        if (!last) stream.queue(stampLine(createFormattedStamp(), lastLine));
+
+        if (!last && elapsedSeconds > low) {
+          stream.queue(stampLine(createFormattedStamp(), lastLine));
+        }
+
         lastLine = line;
       };
       lastLine = line;
@@ -216,9 +235,12 @@ function gnomon(opts: Options) {
   }
 
   let onData: any;
-  if (opts.ignoreBlank) {
+
+  if (ignoreBlank) {
     onData = function (line: Line) {
-      if (line) feed(this, line);
+      if (line) {
+        feed(this, line);
+      }
     };
   } else {
     onData = function (line: Line) {
@@ -236,7 +258,9 @@ function gnomon(opts: Options) {
         formatDuration(elapsedTotal) +
         newline
     );
-    if (autoUpdate) clearTimeout(autoUpdate);
+    if (autoUpdate) {
+      clearTimeout(autoUpdate);
+    }
   });
 }
 

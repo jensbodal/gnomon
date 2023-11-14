@@ -1,6 +1,6 @@
 {
   "name": "@bodal/gnomon",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Utility to annotate console logging statements with timestamps and find slow processes",
   "main": "index.js",
   "private": false,
@@ -11,7 +11,7 @@
   "man": "./doc/gnomon.1",
   "scripts": {
     "docs": "node meta/make-docs.js && marked-man README.md > ./doc/gnomon.1",
-    "test": "echo hi | ./bin/gnomon"
+    "test": "./test/test.sh | ./bin/gnomon --high=1.5 --medium=0.5 --low=0.4"
   },
   "repository": {
     "type": "git",
@@ -45,10 +45,10 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
+    "@bodal/pargv": "^0.0.1",
     "bun": "^1.0.11",
     "chalk": "^5.3.0",
     "date-fns": "^2.30.0",
-    "meow": "12.1.0",
     "repeating": "^4.0.0",
     "split": "^1.0.1",
     "strip-ansi": "^7.1.0",
